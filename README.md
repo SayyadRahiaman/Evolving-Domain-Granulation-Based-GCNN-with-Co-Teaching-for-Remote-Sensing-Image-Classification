@@ -13,7 +13,7 @@ lutional neural network with co-teaching for remote sensing image classification
 The flow diagram of EDG-GCN is shown in Fig. 1. In the first step, a Resnet-50 feature extractor with the series of fifty convolutional and pooling layers is applied on input image to obtain the informative features. EDG is applied on the feature vector and each feature vector is represented with its membership to the domain granule within a class. These domain granulated features are passed through the ensemble of
 classifiers to generate pseudo label of the feature vector. Based on this pseudo label, the elements of affinity matrix in GCN are defined and furthermore, GCN is used to label the feature vector. The detailed architecture of EDG-GCN is shown in Fig.2. In Fig. 2, a Resnet-50 feature extractor with three layers of
 
-  ![Alt Text](https://github.com/SayyadRahiaman/Linked-Generative-Adversarial-Networks-for-Vector-Map-Generation-using-Remote-Sensing-Images-/blob/main/Picture1.jpg)
+  ![Alt Text](https://github.com/SayyadRahiaman/Evolving-Domain-Granulation-Based-GCNN-with-Co-Teaching-for-Remote-Sensing-Image-Classification/blob/main/Figures/Picture1.jpg?raw=true )
 
 Fig. 1: Functional block diagram of EDG-GCN
 convolutional and pooling layers (as an example) is applied on input image to obtain a feature vector of dimension 1×4. This feature vector is passed through the ensemble of classifiers to generate pseudo label. The concept of co-teaching is applied in GCN by defining the elements of affinity matrix based on the pseudo label. Here, GCN is trained based on the batch gradient descent method and furthermore, EDG feature vector is labeled.
@@ -23,7 +23,7 @@ The feature vector from a domain within a class is granu- lated using a trapezoi
 1)	Creating a Domain Granule: A new domain granule is created when the feature vector is arrived from a new class. It is also created when the feature vector do not fit within the existing domain granules. This is shown in Fig. 3 (a). In Fig. 3, a pth granule of a class c is created for a feature value fn along the feature axis. The lower bound and upper bound of a granule is computed as fn − σ and fn + σ, where, σ is a constant (generally considered as the standard deviation of feature values for feature fn). The membership value is maximum value (1) at the center of the granule i.e., at fn. The membership value decreases on either sides of the center value.
 2)	Updating a Domain Granule: A granule is updated when a new feature value (fnew) lies within it. The domain granule is adjusted so that the membership of a feature value is maximum when it is between fnew and fn. The membership value decreases on either sides of the fnew and fn. This approach is implemented by considering all the feature vectors in the dataset. In EDC, a feature vector P with n number of features and c number of classes is represented by n×c number of domain granulated features as,
 
-   ![Alt Text](https://github.com/SayyadRahiaman/Linked-Generative-Adversarial-Networks-for-Vector-Map-Generation-using-Remote-Sensing-Images-/blob/main/picture2%20equation.png)
+   ![Alt Text](https://github.com/SayyadRahiaman/Evolving-Domain-Granulation-Based-GCNN-with-Co-Teaching-for-Remote-Sensing-Image-Classification/blob/main/Figures/picture2%20equation.png?raw=true)
   	
 max(µc(f1n),··· ,µc(fm)) is the maximum membershipamong m domain membership values of feature fn in class c.µc(fmn ) is the membership of a feature fn to the mth domainof class c.The architecture of GCN is similar to a single hiddenlayer neural network (NN) like multi-layer perceptron (MLP).Pictorial representation of GCN architecture is shown in Fig.4. In Fig. 4, GCN has an architecture of n:s:c, where, n isthe number of granulated features in the informative featurevector, s is the number of nodes in the hidden layer, and c isthe number of classes in the dataset. wns is the weight betweennth node of input layer and sth node of hidden layer, and vscis the weight between sth node in the hidden layer and cthnode in the output layer. Let, Xm×n, represents m granulatedfeature vectors with n features in a batch. These feature vectors are mathematically represented by a graph G = {V,E,A}, where V, E, and A denotes nodes, edges, and adjacency of a graph, respectively [8]. A feature vector in X is considered as a node in a graph and its adjacency represents a edge weight in a graph. The elements of affinity matrix Aij of m feature vectors is computed as, Aij= 1, if xi and xj belong to a same class and Aij is 0, otherwise. xi and xj are the ith and jth feature vectors in X. The diagonal degree matrix (Dii) of Aij is computed as, Dii = j Aij The normalized adjacency matrix Aij is given as, A = D−1/2AD−1/2. The hidden layer output of GCN is computed as, H = AX. The H matrix is feed-forwarded to the next layers of GCN and it is trained by using batch gradient descent algorithm.
 C. Ensemble of Classifiers based Co-Teaching in GCN In ensemble of classifiers based co-teaching in GCN, the un supervised feature vector is passed through the ensemble of classifiers to generate pseudo class label to the feature vector. The pseudo label generated by the ensemble of classifiers is used to define the elements of affinity matrix (as explained in sec.II-B).
@@ -32,29 +32,29 @@ A. Datasets Used
 The performance of EDG and its superiority over similar classification models is demonstrated with multispectral and hyperspectral RS image data sets. Four multispectral scene datasets, named Aerial Image (AID), Northwestern Poly technical University (NWPU), University California Merced (UCM), and remote sensing scene classification (RSCNN7), and one hyperspectral dataset, named, Indian Pines (IP) is used in the present study. These data sets are described in Table I. The classes like residential, farm land, parking, forest, and river are common in AID, NWPU, UCM, and RSCNN7 datasets. These five classes were considered to implement DA. The scene image (with a single class in an image) from forest class of AID dataset is shown in Fig. 5 (a). The hyperspectral image of IP is shown in Fig. 5 (b). The hyperspectral images
 consist of small images (patches of size 3×3), each of those representing a small region/patch. The IP dataset is divided in to four sets, namely, Set-1, Set-2, Set-3, and Set-4 to implement DA.
 
-   ![Alt Text](https://github.com/SayyadRahiaman/Linked-Generative-Adversarial-Networks-for-Vector-Map-Generation-using-Remote-Sensing-Images-/blob/main/picture%203.png)
+   ![Alt Text](https://github.com/SayyadRahiaman/Evolving-Domain-Granulation-Based-GCNN-with-Co-Teaching-for-Remote-Sensing-Image-Classification/blob/main/Figures/picture%203.png?raw=true)
    
    Fig. 2: Architecture of EDG-GCN
    
-   ![Alt Text](https://github.com/SayyadRahiaman/Linked-Generative-Adversarial-Networks-for-Vector-Map-Generation-using-Remote-Sensing-Images-/blob/main/picture%204.png)
+   ![Alt Text](https://github.com/SayyadRahiaman/Evolving-Domain-Granulation-Based-GCNN-with-Co-Teaching-for-Remote-Sensing-Image-Classification/blob/main/Figures/picture%204.png?raw=true)
    
    Fig. 3: (a) Creating a new domain granule and (b) Updatinga domain granule. Gpc is the pth domain granule of class c
    
-   ![Alt Text](https://github.com/SayyadRahiaman/Linked-Generative-Adversarial-Networks-for-Vector-Map-Generation-using-Remote-Sensing-Images-/blob/main/picture5.png)
+   ![Alt Text](https://github.com/SayyadRahiaman/Evolving-Domain-Granulation-Based-GCNN-with-Co-Teaching-for-Remote-Sensing-Image-Classification/blob/main/Figures/picture5.png?raw=true)
    
    Fig. 4: Architecture of graph convolutional neural network
    
-   ![Alt Text](https://github.com/SayyadRahiaman/Linked-Generative-Adversarial-Networks-for-Vector-Map-Generation-using-Remote-Sensing-Images-/blob/main/picture6.png)
+   ![Alt Text](https://github.com/SayyadRahiaman/Evolving-Domain-Granulation-Based-GCNN-with-Co-Teaching-for-Remote-Sensing-Image-Classification/blob/main/Figures/picture6.png?raw=true)
    
    Fig. 5: (a) RS scene image with single class (Forest- AID dataset), and (b) RS patch image with multiple classes (IP)
    
-   ![Alt Text](https://github.com/SayyadRahiaman/Linked-Generative-Adversarial-Networks-for-Vector-Map-Generation-using-Remote-Sensing-Images-/blob/main/table1.png)
+   ![Alt Text](https://github.com/SayyadRahiaman/Evolving-Domain-Granulation-Based-GCNN-with-Co-Teaching-for-Remote-Sensing-Image-Classification/blob/main/Tables/table1.png?raw=true)
    
    TABLE I: Description of the data sets
    
 B.	Model description Five models were considered to implement the performance comparison of EDG-GNN. The description of the models is based on the type of feature extractor, type of data granulation, the type of classifier used for co-teaching, and the type of classifier in the classification stage. This is represented as, Model : Feature Extractor + Type of Granulation + Type of co-teaching + Classifier stage, Model 1: Resnet- 50+None+Single classifer+GCN (base model) [6], Model 2: Resnet-50+None+ensemble of classifiers+GCN, Model 3: Resnet-50+CI+ensemble of classifiers+GCN, Model 4: Resnet-50+CD+ensemble of classifiers+GCN, Model 5 (pro-posed): Resnet-50+EDG+ensemble of classifiers+GCN. The models 1-5 have Resnet-50 as a feature extractor and GCN as a classifier in the classification stage. Model 1 is CNN with Resnet-50 feature extractor and un-granulated data is provided as an input. It has multi-layered perceptron (MLP) as a single classifier used in the co-teaching of GCN. Model 2 is CNN with Resnet-50 feature extractor and un-granulated data is provided as an input to it. It has ensemble of classifiers (the models like MLP, support vector machine (SVM), random forest (RF), and decision tree (DT) are used in the ensemble of classifiers). Model 3 is CNN with CI granulated input. Model 4 is CNN with CD granulated input and Model 5 is EDG-GCN (proposed model) with EDG based input data. The performance of these models is evaluated using the metri cs like overall accuracy (OA), overall accuracy standard deviation (OAST D), kappa coefficient (K), kappa coefficient standard deviation (KST D), F-score (F ), computational time (Tc), and number of training iterations (NI).
 
-![Alt Text](https://github.com/SayyadRahiaman/Linked-Generative-Adversarial-Networks-for-Vector-Map-Generation-using-Remote-Sensing-Images-/blob/main/table2.png)
+![Alt Text](https://github.com/SayyadRahiaman/Evolving-Domain-Granulation-Based-GCNN-with-Co-Teaching-for-Remote-Sensing-Image-Classification/blob/main/Tables/table2.png?raw=true)
 
 TABLE II: Performances of the models in SSMT DA
 C.	Performances of the models in SSMT (scene images)
@@ -65,7 +65,7 @@ Model 5 is 3.89% better the model 1 (base model [6]). The superiority of model 5
 ## IV.	CONCLUSION
 A EDG-GCN model is proposed in the present study to implement SSMT DA using RS scene and patch image datasets. The concept of evolving domain granulation is used
 
-![Alt Text](https://github.com/SayyadRahiaman/Linked-Generative-Adversarial-Networks-for-Vector-Map-Generation-using-Remote-Sensing-Images-/blob/main/table3.png )
+![Alt Text](https://github.com/SayyadRahiaman/Evolving-Domain-Granulation-Based-GCNN-with-Co-Teaching-for-Remote-Sensing-Image-Classification/blob/main/Tables/table3.png?raw=true)
 
 TABLE III: Performance of models with IP data set (set 1 → set 2, set 3, set 4)
 
