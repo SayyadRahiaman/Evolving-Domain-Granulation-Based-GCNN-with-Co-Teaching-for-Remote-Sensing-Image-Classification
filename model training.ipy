@@ -1,0 +1,156 @@
+Training the model
+def train(global_disc, global_gen, local_disc, local_gen, loader, opt_disc_global, opt_gen_global, opt_disc_local, opt_gen_local, global_g_scaler, global_d_scaler, local_g_scaler, local_d_scaler, g_l1, g_bce, l_l1, l_bce):
+    loop = tqdm(loader, leave=True)
+
+    for idx, (x, y) in enumerate(loop):
+        x, y = x.to(DEVICE), y.to(DEVICE)
+
+        # Train Global Discriminator
+        with torch.cuda.amp.autocast():
+            global_y_fake_list = global_gen(x)
+            global_d_real = global_disc(x, y)
+            global_d_fake_0 = global_disc(x, global_y_fake_list[0].detach())
+            global_d_fake_1 = global_disc(x, global_y_fake_list[1].detach())
+            global_d_fake_2 = global_disc(x, global_y_fake_list[2].detach())
+            global_d_fake_3 = global_disc(x, global_y_fake_list[3].detach())
+            global_d_fake_4 = global_disc(x, global_y_fake_list[4].detach())
+            global_d_fake_5 = global_disc(x, global_y_fake_list[5].detach())
+            global_d_fake_6 = global_disc(x, global_y_fake_list[6].detach())
+
+            global_d_fake = (global_d_fake_0 + global_d_fake_1 + global_d_fake_2 + global_d_fake_3 +
+                             global_d_fake_4 + global_d_fake_5 + global_d_fake_6) / 7
+            global_d_real_loss = g_bce(
+                global_d_real, torch.ones_like(global_d_real))
+            global_d_fake_loss = g_bce(
+                global_d_fake, torch.zeros_like(global_d_fake))
+            global_d_loss = (global_d_real_loss + global_d_fake_loss) / 2
+
+        opt_disc_global.zero_grad()
+        global_d_scaler.scale(global_d_loss).backward()
+        global_d_scaler.step(opt_disc_global)
+        global_d_scaler.update()
+
+        # Train Global Generator
+        with torch.cuda.amp.autocast():
+            global_d_fake_0 = global_disc(x, global_y_fake_list[0].detach())
+            global_d_fake_1 = global_disc(x, global_y_fake_list[1].detach())
+            global_d_fake_2 = global_disc(x, global_y_fake_list[2].detach())
+            global_d_fake_3 = global_disc(x, global_y_fake_list[3].detach())
+            global_d_fake_4 = global_disc(x, global_y_fake_list[4].detach())
+            global_d_fake_5 = global_disc(x, global_y_fake_list[5].detach())
+            global_d_fake_6 = global_disc(x, global_y_fake_list[6].detach())
+            global_d_fake = (global_d_fake_0 + global_d_fake_1 + global_d_fake_2 + global_d_fake_3 +
+                             global_d_fake_4 + global_d_fake_5 + global_d_fake_6) / 7
+
+            global_g_fake_loss = g_bce(
+                global_d_fake, torch.ones_like(global_d_fake))
+            global_l_total = g_l1(global_y_fake_list[0], y) + g_l1(global_y_fake_list[1], y) + g_l1(global_y_fake_list[2], y) + g_l1(
+                global_y_fake_list[3], y) + g_l1(global_y_fake_list[4], y) + g_l1(global_y_fake_list[5], y) + g_l1(global_y_fake_list[6], y)
+            global_L1 = global_l_total * LAMBDA_L1
+            global_g_loss = global_g_fake_loss + global_L1
+
+        opt_gen_global.zero_grad()
+        global_g_scaler.scale(global_g_loss).backward()
+        global_g_scaler.step(opt_gen_global)
+        global_g_scaler.update()
+
+        # Train Local Discriminator
+        with torch.cuda.amp.autocast():
+            local_y_fake = local_gen(x, global_y_fake_list[6].detach())
+            local_d_real = local_disc(x, y)
+            local_d_fake = local_disc(x, local_y_fake.detach())
+            local_d_real_loss = l_bce(
+                local_d_real, torch.ones_like(local_d_real))
+            local_d_fake_loss = l_bce(
+                local_d_fake, torch.zeros_like(local_d_fake))
+            local_d_loss = (local_d_real_loss + local_d_fake_loss) / 2
+
+        opt_disc_local.zero_grad()
+        local_d_scaler.scale(local_d_loss).backward()
+        local_d_scaler.step(opt_disc_local)
+        local_d_scaler.update()
+
+        # Train Local Generator
+        with torch.cuda.amp.autocast():
+            local_d_fake = local_disc(x, local_y_fake.detach())
+            local_g_fake_loss = l_bce(
+                local_d_fake, torch.ones_like(local_d_fake))
+            local_l1 = l_l1(local_y_fake, y) * LAMBDA_L1
+            local_g_loss = local_g_fake_loss + local_l1
+
+        opt_gen_local.zero_grad()
+        local_g_scaler.scale(local_g_loss).backward()
+        local_g_scaler.step(opt_gen_local)
+        local_g_scaler.update()
+def main():
+    global_disc = Discriminator(in_channels=3).to(DEVICE)
+    global_gen = GlobalGenerator(
+        in_channels=3, deep_supervision=True).to(DEVICE)
+    local_disc = Discriminator(in_channels=3).to(DEVICE)
+    local_gen = LocalGenerator(in_channels=3).to(DEVICE)
+
+    opt_disc_global = torch.optim.Adam(
+        global_disc.parameters(), lr=LEARNING_RATE, betas=(0.5, 0.999))
+    opt_gen_global = torch.optim.Adam(
+        global_gen.parameters(), lr=LEARNING_RATE, betas=(0.5, 0.999))
+    opt_disc_local = torch.optim.Adam(
+        local_disc.parameters(), lr=LEARNING_RATE, betas=(0.5, 0.999))
+    opt_gen_local = torch.optim.Adam(
+        local_gen.parameters(), lr=LEARNING_RATE, betas=(0.5, 0.999))
+
+    g_BCE = torch.nn.BCEWithLogitsLoss()
+    l_BCE = torch.nn.BCEWithLogitsLoss()
+    g_L1 = torch.nn.L1Loss()
+    l_L1 = torch.nn.L1Loss()
+
+    if LOAD_MODEL:
+        load_checkpoint(LOAD_GEN_GLOBAL, global_gen,
+                        opt_gen_global, LEARNING_RATE)
+        load_checkpoint(LOAD_DISC_GLOBAL, global_disc,
+                        opt_disc_global, LEARNING_RATE)
+        load_checkpoint(LOAD_GEN_LOCAL, local_gen,
+                        opt_gen_local, LEARNING_RATE)
+        load_checkpoint(LOAD_DISC_LOCAL, local_disc,
+                        opt_disc_local, LEARNING_RATE)
+
+    train_dataset_path = f'{DATA_PATH}/train'
+    train_dataset = MapDatasetLoader(root_dir=train_dataset_path)
+    train_loader = torch.utils.data.DataLoader(
+        train_dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=NUM_WORKERS)
+
+    global_g_scaler = torch.cuda.amp.GradScaler()
+    global_d_scaler = torch.cuda.amp.GradScaler()
+    local_g_scaler = torch.cuda.amp.GradScaler()
+    local_d_scaler = torch.cuda.amp.GradScaler()
+
+    val_dataset_path = f'{DATA_PATH}/val'
+    val_dataset = ValDatasetLoader(root_dir=val_dataset_path)
+    val_loader = torch.utils.data.DataLoader(
+        val_dataset, batch_size=1, shuffle=False)
+
+    for epoch in range(START_EPOCH, NUM_EPOCHS+1):
+        print('Epoch:', epoch)
+        train(
+            global_disc, global_gen,
+            local_disc, local_gen,
+            train_loader,
+            opt_disc_global, opt_gen_global,
+            opt_disc_local, opt_gen_local,
+            global_g_scaler, global_d_scaler,
+            local_g_scaler, local_d_scaler,
+            g_L1, g_BCE, l_L1, l_BCE
+        )
+
+        if SAVE_MODEL and epoch % 5 == 0:
+            save_checkpoint(global_gen, opt_gen_global,
+                            filename=CHECKPOINT_GEN_GLOBAL)
+            save_checkpoint(global_disc, opt_disc_global,
+                            filename=CHECKPOINT_DISC_GLOBAL)
+            save_checkpoint(local_gen, opt_gen_local,
+                            filename=CHECKPOINT_GEN_LOCAL)
+            save_checkpoint(local_disc, opt_disc_local,
+                            filename=CHECKPOINT_DISC_LOCAL)
+
+        save_example(global_gen, local_gen, val_loader,
+                     epoch, folder='training_images',
+                     deep_supervision=True)
